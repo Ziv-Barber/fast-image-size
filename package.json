@@ -14,10 +14,10 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "git://github.com/Ziv-Barber/???.git"
+		"url": "git://github.com/Ziv-Barber/fast-image-size.git"
 	},
 	"bugs": {
-		"url": "https://github.com/Ziv-Barber/???/issues"
+		"url": "https://github.com/Ziv-Barber/fast-image-size/issues"
 	},
 	"main": "./index.js",
 	"directories": {
