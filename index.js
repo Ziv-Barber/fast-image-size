@@ -52,7 +52,7 @@ module.exports = exports = function ( file_path, callback ) {
 		// Detect JPEG:
 		} else if ( buffer_data[0] == 0xFF && buffer_data[1] == 0xD8 && buffer_data[2] == 0xFF && buffer_data[3] == 0xE0 ) {
 			retInfo.type = 'jpeg';
-			console.log ( buffer_data );
+			// console.log ( buffer_data );
 			// BMK_TODO: soon...
 
 		// Detect PNG:
