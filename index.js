@@ -71,7 +71,7 @@ module.exports = exports = function ( file_path, callback ) {
 			retInfo.height = (buffer_data[25] * 256 * 256 * 256) + (buffer_data[24] * 256 * 256) + (buffer_data[23] * 256) + buffer_data[22];
 		} // Endif.
 
-		retInfo.image = file_path;
+		if ( file_path ) retInfo.image = file_path;
 		if ( !retInfo.type ) {
 			retInfo.type = 'unknown';
 		} // Endif.
@@ -84,7 +84,11 @@ module.exports = exports = function ( file_path, callback ) {
 	};
 
 	// Async mode:
-	if ( callback ) {
+	if ( file_path instanceof Buffer ) {
+		buffer = file_path;
+		file_path = null;
+		return parseHeaderData( buffer, callback );
+	} else if ( callback ) {
 		fs.exists ( file_path, function( exists ) {
 			if ( exists ) {
 				fs.stat ( file_path, function ( error, stats ) {
