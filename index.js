@@ -32,7 +32,7 @@ var fast_image_size_info = require('./package.json');
 var fs = require('fs');
 
 module.exports = exports = function ( file_path, callback ) {
-	var BUF_LENGTH = 128;
+	var BUF_LENGTH = 64;
 	var buffer = new Buffer ( BUF_LENGTH );
 
 	// Internal options:
