@@ -32,13 +32,34 @@ var fast_image_size_info = require('./package.json');
 var fs = require('fs');
 
 module.exports = exports = function ( file_path, callback ) {
-	var BUF_LENGTH = 128;
-	var buffer = new Buffer ( BUF_LENGTH );
-
 	// Internal options:
 	if ( file_path == '@version@' ) {
 		return fast_image_size_info.version;
 	} // Endif.
+
+	function getJpgSize( buffer_data, retInfo ) {
+	  // Skip 5 chars, they are for signature
+	  buffer_data = buffer_data.slice( 4 );
+
+	  var i, next;
+	  while (buffer_data.length) {
+	    // read length of the next block
+	    i = buffer_data.readUInt16BE( 0 );
+
+	    // 0xFFC0 is baseline(SOF)
+	    // 0xFFC2 is progressive(SOF2)
+	    next = buffer_data[ i + 1 ];
+	    if (next === 0xC0 || next === 0xC2) {
+	      return {
+	        'height' : buffer_data.readUInt16BE( i + 5 ),
+	        'width' : buffer_data.readUInt16BE( i + 7 )
+	      };
+	    }
+
+	    // move to the next block
+	    buffer_data = buffer_data.slice( i + 2 );
+	  }
+	}
 
 	function parseHeaderData ( buffer_data, callback_data ) {
 		var retInfo = {};
@@ -51,9 +72,10 @@ module.exports = exports = function ( file_path, callback ) {
 
 		// Detect JPEG:
 		} else if ( buffer_data[0] == 0xFF && buffer_data[1] == 0xD8 && buffer_data[2] == 0xFF && buffer_data[3] == 0xE0 ) {
-			retInfo.type = 'jpeg';
-			// console.log ( buffer_data );
-			// BMK_TODO: soon...
+		  retInfo.type = 'jpeg';
+		  var size = getJpgSize( buffer_data, retInfo );
+		  retInfo.width = size.width;
+		  retInfo.height = size.height;
 
 		// Detect PNG:
 		} else if ( buffer_data[0] == 137 && buffer_data[1] == 80 && buffer_data[2] == 78 && buffer_data[3] == 71 && buffer_data[4] == 13 && buffer_data[5] == 10 && buffer_data[6] == 26 && buffer_data[7] == 10 ) {
@@ -85,19 +107,16 @@ module.exports = exports = function ( file_path, callback ) {
 
 	// Async mode:
 	if ( callback ) {
-		fs.exists ( file_path, function( exists ) {
-			if ( exists ) {
-				fs.stat ( file_path, function ( error, stats ) {
-					if ( stats.size && (stats.size > BUF_LENGTH) ) {
-						fs.open ( file_path, "r", function ( error, fd ) {
-							fs.read ( fd, buffer, 0, BUF_LENGTH, null, function ( error, bytesRead, buffer ) {
-								fs.close ( fd );
-								parseHeaderData ( buffer, callback );
-							});
-						});
-					} // Endif.
-				});
-
+	  fs.exists ( file_path, function( exists ) {
+	    if ( exists ) {
+	      fs.open ( file_path, "r", function ( error, fd ) {
+	        var bufferSize = fs.fstatSync( fd ).size;
+	        var buffer = new Buffer( bufferSize );
+	        fs.read ( fd, buffer, 0, bufferSize, null, function ( error, bytesRead, buffer ) {
+	          fs.close ( fd );
+	          parseHeaderData ( buffer, callback );
+	        });
+	      });
 			} else {
 				throw 'Error: Invalid file name.';
 			} // Endif.
@@ -106,8 +125,10 @@ module.exports = exports = function ( file_path, callback ) {
 	// Sync mode:
 	} else {
 		var fd = fs.openSync ( file_path, "r" );
-		var bytesRead = fs.readSync ( fd, buffer, 0, BUF_LENGTH, 0 );
-		fs.close ( fd );
+		var bufferSize = fs.fstatSync( fd ).size;
+		var buffer = new Buffer( bufferSize );
+		var bytesRead = fs.readSync ( fd, buffer, 0, bufferSize, 0 );
+		fs.closeSync ( fd );
 		return parseHeaderData ( buffer, null );
 	} // Endif.
 };

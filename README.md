@@ -19,6 +19,7 @@ This module is a simple stand alone module to just extract the image size from i
 	- png
 	- gif
 	- bmp
+	- jpg
 - Don't need any special library!
 - Short and simple code.
 
